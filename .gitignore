@@ -1,0 +1,7 @@
+# Ignore everything
+*
+
+# But not these files
+!.gitignore
+!new_post_test.py
+
