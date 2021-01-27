@@ -6,6 +6,7 @@ BASE = {
     "mouse_visible": False,
     "logging_level": logging.INFO,
     "exp_name": "FH_WordOA_PostTest",
+    "log_file": "./test_log.xlsx"
 }
 
 TEST = {"test": True, "logging_level": logging.DEBUG, "exp_name": "TestExp"}
