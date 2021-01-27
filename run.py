@@ -1,8 +1,12 @@
-from psychopy import core, gui, logging
-from stimulus import Paradigm, Text
+import random
 
-from settings import get_settings
+import pandas as pd
+from psychopy import core, gui, logging
+import xlsxwriter
+
 import experiment as ex
+from settings import get_settings
+from stimulus import Paradigm, Text
 
 settings = get_settings(env="dev", test=True)
 
@@ -16,15 +20,47 @@ def run_experiment():
 
     isOdd = True if int(exp_info["participant"]) % 2 != 0 else False
 
-    par = constructPar()
+    par = constructPar(isOdd)
     if par:
-        par.playAll()
+        #  Start clock for total experiment runtime
+        experiment_timer = core.MonotonicClock()
+        par.playAll(isOdd)
+
+        #  Write total runtime to log
+        exp_runtime = experiment_timer.getTime()
+        ex.log_df.at[0, 'Experiment_Runtime'] = exp_runtime
+
+        #  Dump log to xlsx
+        log_path = settings["log_file"]
+        writer = pd.ExcelWriter(log_path, engine='xlsxwriter')
+        ex.log_df.to_excel(writer, 'Experiment Info')
+        ex.key_log_df.to_excel(writer, 'Key Responses')
+        writer.close()
 
 
-def constructPar():
-    par = Paradigm(window_dimensions=settings["window_dimensions"], escape_key="escape")
+def constructPar(isOdd):
+    par = Paradigm(
+        window_dimensions=settings["window_dimensions"], escape_key="escape")
 
-    stimuli = [(Text, (ex.introduction01, ex.duration01, ex.keys01))]
+    default_duration = 2.0
+    default_keys = ["d", "k"]
+
+    #  Get list of 40 random words
+    face_words = ex.face_rows.NOUN.tolist()
+    house_words = ex.house_rows.NOUN.tolist()
+    random_words = face_words + house_words
+    random.shuffle(random_words)
+
+    intro_text = dict()
+    intro_text['intro'] = ex.intro
+    stimuli = [(Text, (intro_text, ex.intro_duration, ex.intro_key))]
+
+    for word in random_words:
+        key_text = ex.rand_odd_key if isOdd else ex.rand_even_key
+        display_text = dict()
+        display_text[word] = word + "\n" + key_text
+        stim = (Text, (display_text, 0.0, default_keys))
+        stimuli.append(stim)
 
     par.addStimuli(stimuli)
 

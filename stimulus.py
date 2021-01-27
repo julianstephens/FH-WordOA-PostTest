@@ -1,5 +1,8 @@
-from psychopy import visual, core, event
 import ctypes
+
+from psychopy import core, event, visual
+
+import experiment as ex
 
 
 class Paradigm:
@@ -69,7 +72,7 @@ class Paradigm:
         for stimulus in stimuli:
             self.addStimulus(stimulus)
 
-    def playAll(self, verbose=False):
+    def playAll(self, isOdd, verbose=False):
         """Plays all the stimuli in the sequence.
 
         Args:
@@ -84,11 +87,11 @@ class Paradigm:
             if verbose:
                 "Playing stimulus {stim_index}".format(stim_index=stim_index)
 
-            self.playNext()
+            self.playNext(isOdd)
         core.quit()
         print("Finished")
 
-    def playNext(self, verbose=False):
+    def playNext(self, isOdd, verbose=False):
         """Plays the next stimulus in the sequence
 
         Args:
@@ -104,7 +107,7 @@ class Paradigm:
 
             if verbose:
                 print(stim)
-            return stim.show()
+            return stim.show(isOdd)
         else:
             core.quit()
 
@@ -135,11 +138,11 @@ class Stimulus(object):
     """An abstract stimulus class. All stimulus types will inherit from this class"""
 
     def show(self):
-        """Show the stimulus. Must be implemented by descendant classes"""
+        #  Show the stimulus. Must be implemented by descendant classes
         raise NotImplementedError
 
     def close(self):
-        """Close out."""
+        #  Close out.
         core.quit()
 
 
@@ -154,14 +157,18 @@ class Text(Stimulus):
             keys: the list of keys to press to continue to the next stimulus (if None, will automatically go to next stimulus)
         """
         self.window = window
-        self.text = visual.TextStim(self.window, text=text, units="norm")
+        self.word_key = list(text.keys()[0])
+        self.text = visual.TextStim(
+            self.window, text=text[self.word_key], units="norm")
         self.duration = duration
         self.keys = keys
 
-    def show(self):
+    def show(self, isOdd):
         self.text.draw()
         self.window.flip()
-        core.wait(self.duration)
+
+        if self.duration:
+            core.wait(self.duration)
 
         if self.keys:
             wait_for_key(self.keys)
@@ -193,28 +200,53 @@ class WaitForKey(Stimulus):
         event
         window
         keys
+        word_key
 
     """
 
-    def __init__(self, window, keys, event="continue"):
+    def __init__(self, window, keys, word_key, event="continue"):
         self.window = window
         self.keys = keys
         self.event = event
+        self.word_key = word_key
 
-    def show(self):
+    def show(self, isOdd):
         wait_for_key(self.keys)
-        self.run_event()
+        self.run_event(isOdd)
         return self
 
-    def run_event(self):
+    def run_event(self, isOdd):
         if self.event == "exit":
             print("Exiting...")
             self.window.close()
             core.quit()
         if self.event in ["nothing", "continue"]:
             pass
+
+        #  Get participant answer
+        key_pressed = self.event.getKeys()
+
+        #  Create key for answer lookup
+        answer_code = {}
+
+        if isOdd:
+            answer_code['d'] = 'f'
+            answer_code['k'] = 'e'
         else:
-            print("Warning: Event not recognized. Doing nothing.")
+            answer_code['d'] = 'e'
+            answer_code['k'] = 'f'
+
+        #  Get correct answer
+        correct_answer = ex.excel_df[ex.excel_df.NOUN ==
+                                     self.word_key].recallRespCorrect
+
+        #  Update participant score if correct
+        if correct_answer == answer_code[key_pressed]:
+            curr_score = ex.log_df.at[0, 'Num_Correct_Nouns']
+
+            if curr_score:
+                new_score = int(curr_score) + 1
+                ex.log_df.at[0, 'Num_Correct_Nouns'] = new_score
 
 
 def wait_for_key(keys):
