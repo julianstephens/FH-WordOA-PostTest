@@ -1,8 +1,10 @@
 import ctypes
+import random
 
 from psychopy import core, event, visual
 
 import experiment as ex
+import run
 
 
 class Paradigm:
@@ -72,7 +74,7 @@ class Paradigm:
         for stimulus in stimuli:
             self.addStimulus(stimulus)
 
-    def playAll(self, isOdd, verbose=False):
+    def playAll(self, is_odd, verbose=False):
         """Plays all the stimuli in the sequence.
 
         Args:
@@ -87,11 +89,11 @@ class Paradigm:
             if verbose:
                 "Playing stimulus {stim_index}".format(stim_index=stim_index)
 
-            self.playNext(isOdd)
+            self.playNext(is_odd)
         core.quit()
         print("Finished")
 
-    def playNext(self, isOdd, verbose=False):
+    def playNext(self, is_odd, verbose=False):
         """Plays the next stimulus in the sequence
 
         Args:
@@ -107,7 +109,7 @@ class Paradigm:
 
             if verbose:
                 print(stim)
-            return stim.show(isOdd)
+            return stim.show(is_odd)
         else:
             core.quit()
 
@@ -163,7 +165,7 @@ class Text(Stimulus):
         self.duration = duration
         self.keys = keys
 
-    def show(self, isOdd):
+    def show(self, is_odd):
         self.text.draw()
         self.window.flip()
 
@@ -210,12 +212,12 @@ class WaitForKey(Stimulus):
         self.event = event
         self.word_key = word_key
 
-    def show(self, isOdd):
+    def show(self, is_odd):
         wait_for_key(self.keys)
-        self.run_event(isOdd)
+        self.run_event(is_odd)
         return self
 
-    def run_event(self, isOdd):
+    def run_event(self, is_odd):
         if self.event == "exit":
             print("Exiting...")
             self.window.close()
@@ -229,7 +231,8 @@ class WaitForKey(Stimulus):
         #  Create key for answer lookup
         answer_code = {}
 
-        if isOdd:
+        #  Set keys based on participant ID
+        if is_odd:
             answer_code['d'] = 'f'
             answer_code['k'] = 'e'
         else:
@@ -239,6 +242,8 @@ class WaitForKey(Stimulus):
         #  Get correct answer
         correct_answer = ex.excel_df[ex.excel_df.NOUN ==
                                      self.word_key].recallRespCorrect
+        word_type = ex.excel_df.loc[ex.excel_df.Noun == self.word_key].ASSOCIATE
+        probe_type = "HOUSE"
 
         #  Update participant score if correct
         if correct_answer == answer_code[key_pressed]:
@@ -247,6 +252,8 @@ class WaitForKey(Stimulus):
             if curr_score:
                 new_score = int(curr_score) + 1
                 ex.log_df.at[0, 'Num_Correct_Nouns'] = new_score
+            else:
+                ex.log_df.at[0, 'Num_Correct_Nouns'] = 1
 
 
 def wait_for_key(keys):
@@ -258,3 +265,31 @@ def wait_for_key(keys):
     """
     event.clearEvents()
     event.waitKeys(keyList=keys)
+
+
+def get_probe(probe_type, is_odd):
+    probe_tup = None
+
+    #  Get probe
+    if probe_type == 'HOUSE' and is_odd:
+        probe_tup = random.choice(ex.house_list_odd)
+    elif probe_type == 'HOUSE' and not is_odd:
+        probe_tup = random.choice(ex.house_list_even)
+    if probe_type == 'FACE' and is_odd:
+        probe_tup = random.choice(ex.face_list_odd)
+    elif probe_type == 'FACE' and not is_odd:
+        probe_tup = random.choice(ex.face_list_even)
+
+    #  If unable to get probe, exit
+    if probe_tup:
+        (probe, keys) = probe_tup
+    else:
+        print("Exiting...")
+        core.quit()
+
+    #  Construct stim and add to stimlist
+    display_text = dict()
+    display_text[probe] = probe + "\n" + keys
+    stim = (Text, (display_text, 0.0, ["d", "k"]))
+
+    run.stimuli.insert(0, stim)
