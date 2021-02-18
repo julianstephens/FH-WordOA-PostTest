@@ -21,7 +21,6 @@ intro_key = ["space"]
 rand_odd_key = "D = BUILDING, K = FACE"
 rand_even_key = "D = FACE, K =  BUILDING"
 
-
 #  Probes
 house_probe_1 = "IS THIS A RESIDENTIAL OR COMMERCIAL BUILDING?"
 house_probe_2 = "IS THIS A ONE STORY OR MULTISTORY BUILDING?"
@@ -46,6 +45,16 @@ face_key_even_1 = ["'D' = FEMALE, 'K' = MALE"]
 face_key_even_2 = ["'D' = OLDER, 'K' = YOUNGER"]
 face_key_even_3 = ["'D' = NOT WHITE, 'K' = WHITE"]
 
+house_list_odd = [(house_probe_1, house_key_odd_1), (house_probe_2,
+                                                     house_key_odd_2), (house_probe_3, house_key_odd_3)]
+house_list_even = [(house_probe_1, house_key_even_1), (house_probe_2,
+                                                       house_key_even_2), (house_probe_3, house_key_even_3)]
+face_list_odd = [(face_probe_1, face_key_odd_1), (face_probe_2,
+                                                  face_key_odd_2), (face_probe_3, face_key_odd_3)]
+face_list_even = [(face_probe_1, face_key_even_1), (face_probe_2,
+                                                    face_key_even_2), (face_probe_3, face_key_even_3)]
+
+
 #  Load stim list and get 40 random rows
 excel_df = pd.read_excel('./Stim_AssociateMasterList.xlsx',
                          index_col=None, usecols='A,C:H')
@@ -62,4 +71,5 @@ key_log_df = pd.DataFrame(
 log_df.at[0, 'Num_Correct_Nouns'] = 0
 log_df.at[0, 'Num_Correct_Probes'] = 0
 
-print(log_df)
+#  print(log_df)
+print(excel_df.loc[excel_df.NOUN == "ROOT"].ASSOCIATE)
