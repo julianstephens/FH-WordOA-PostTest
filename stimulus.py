@@ -1,5 +1,6 @@
 import ctypes
 import random
+import sys
 
 from psychopy import core, event, visual
 
@@ -72,6 +73,7 @@ class Paradigm:
 
         """
         for stimulus in stimuli:
+            print("Added Stimulus")
             self.addStimulus(stimulus)
 
     def playAll(self, is_odd, verbose=False):
@@ -149,7 +151,7 @@ class Stimulus(object):
 
 
 class Text(Stimulus):
-    def __init__(self, window, text, duration=2.0, keys=None):
+    def __init__(self, window, text, height=0.1, duration=2.0, keys=None):
         """Initializes a text stimulus
 
         Args:
@@ -159,9 +161,10 @@ class Text(Stimulus):
             keys: the list of keys to press to continue to the next stimulus (if None, will automatically go to next stimulus)
         """
         self.window = window
-        self.word_key = list(text.keys()[0])
+        self.word_key = list(text.keys())[0]
+        self.height = height
         self.text = visual.TextStim(
-            self.window, text=text[self.word_key], units="norm")
+            self.window, text=text[self.word_key], height=self.height, units="norm")
         self.duration = duration
         self.keys = keys
 
@@ -171,9 +174,13 @@ class Text(Stimulus):
 
         if self.duration:
             core.wait(self.duration)
+        elif self.keys:
+            print("waiting for key")
+            wait = WaitForKey(self.window, self.keys, self.word_key)
+            print("created wait")
 
-        if self.keys:
-            wait_for_key(self.keys)
+            return wait.show(self, is_odd)
+
         self.window.flip()
         return self
 
@@ -212,21 +219,22 @@ class WaitForKey(Stimulus):
         self.event = event
         self.word_key = word_key
 
-    def show(self, is_odd):
-        wait_for_key(self.keys)
-        self.run_event(is_odd)
+    def show(self, stimulus, is_odd):
+        print("In wait show")
+
+        #  Get participant answer
+        key_pressed = wait_for_key(self.keys)
+
+        #  Process answer
+        self.run_event(stimulus, is_odd, key_pressed)
+
         return self
 
-    def run_event(self, is_odd):
+    def run_event(self, stimulus, is_odd, key_pressed):
         if self.event == "exit":
             print("Exiting...")
             self.window.close()
             core.quit()
-        if self.event in ["nothing", "continue"]:
-            pass
-
-        #  Get participant answer
-        key_pressed = self.event.getKeys()
 
         #  Create key for answer lookup
         answer_code = {}
@@ -242,10 +250,13 @@ class WaitForKey(Stimulus):
         #  Get correct answer
         correct_answer = ex.excel_df[ex.excel_df.NOUN ==
                                      self.word_key].recallRespCorrect
-        word_type = ex.excel_df.loc[ex.excel_df.Noun == self.word_key].ASSOCIATE
+        word_type = ex.excel_df.loc[ex.excel_df.Noun ==
+                                    self.word_key].ASSOCIATE
         probe_type = "HOUSE"
 
         #  Update participant score if correct
+        print("Par Answer: ", answer_code[key_pressed],
+              "\nCorrect Answer: ", correct_answer)
         if correct_answer == answer_code[key_pressed]:
             curr_score = ex.log_df.at[0, 'Num_Correct_Nouns']
 
@@ -255,19 +266,31 @@ class WaitForKey(Stimulus):
             else:
                 ex.log_df.at[0, 'Num_Correct_Nouns'] = 1
 
+            probe_type = word_type
+        else:
+            probes = ["HOUSE", "FACE"]
+            probe_type = probes[random.randint(0, 1)]
+
+        get_probe(probe_type, is_odd)
+
+        stimulus.window.flip()
+        return stimulus
+
 
 def wait_for_key(keys):
     """Wait for a key that is in a set of keys to be pressed before proceeding.
 
     Args:
         keys: a list or tuple of keys
-
     """
     event.clearEvents()
     event.waitKeys(keyList=keys)
 
+    return event.getKeys()
+
 
 def get_probe(probe_type, is_odd):
+    print("Creating probe")
     probe_tup = None
 
     #  Get probe
@@ -290,6 +313,6 @@ def get_probe(probe_type, is_odd):
     #  Construct stim and add to stimlist
     display_text = dict()
     display_text[probe] = probe + "\n" + keys
-    stim = (Text, (display_text, 0.0, ["d", "k"]))
+    stim = (Text, (display_text, 0.1, 0.0, ["d", "k"]))
 
     run.stimuli.insert(0, stim)

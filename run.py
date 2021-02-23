@@ -1,4 +1,6 @@
+from psychopy import logging
 import random
+import sys
 
 import pandas as pd
 from psychopy import core, gui, logging
@@ -9,6 +11,7 @@ import stimulus as st
 from settings import get_settings
 
 settings = get_settings(env="dev", test=True)
+logging.console.setLevel(logging.WARNING)
 
 
 def run_experiment():
@@ -27,6 +30,7 @@ def run_experiment():
         #  Start clock for total experiment runtime
         experiment_timer = core.MonotonicClock()
         par.playAll(is_odd)
+        sys.stdout.flush()
 
         #  Write total runtime to log
         exp_runtime = experiment_timer.getTime()
@@ -57,14 +61,15 @@ def constructPar(is_odd):
     #  Create intro routine
     intro_text = dict()
     intro_text['intro'] = ex.intro
-    stimuli = [(st.Text, (intro_text, ex.intro_duration, ex.intro_key))]
+    stimuli = [(st.Text, (intro_text, 0.05,
+                          ex.intro_duration, ex.intro_key))]
 
     #  Create word stimuli
     for word in random_words:
         key_text = ex.rand_odd_key if is_odd else ex.rand_even_key
         display_text = dict()
         display_text[word] = word + "\n" + key_text
-        stim = (st.Text, (display_text, 0.0, default_keys))
+        stim = (st.Text, (display_text, 0.1, 0.0, default_keys))
         stimuli.append(stim)
 
     #  Add stimuli to paradigm
