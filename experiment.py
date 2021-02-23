@@ -13,9 +13,9 @@ YOUR BEST GUESS. YOU WILL HAVE 6 SECONDS TO RESPOND
 SO PLEASE TAKE YOUR TIME AND BE AS ACCURATE AS 
 POSSIBLE. 
 
-PLEASE PRESS THE SPACE BAR WHEN YOU ARE READY TO BEGIN."""
-intro_duration = 2.0
-intro_key = ["space"]
+PLEASE PRESS D or K WHEN YOU ARE READY TO BEGIN."""
+intro_duration = 10.0
+intro_key = ["d", "k"]
 
 #  Random word key assignments
 rand_odd_key = "D = BUILDING, K = FACE"
