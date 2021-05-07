@@ -232,12 +232,13 @@ class WaitForKey(Stimulus):
 
     def run_event(self, stimulus, is_odd, key_pressed):
         if self.event == "exit":
+            print("Inside run_event")
             print("Exiting...")
             self.window.close()
             core.quit()
 
         #  Create key for answer lookup
-        answer_code = {}
+        answer_code = dict()
 
         #  Set keys based on participant ID
         if is_odd:
@@ -248,15 +249,16 @@ class WaitForKey(Stimulus):
             answer_code['k'] = 'f'
 
         #  Get correct answer
-        correct_answer = ex.excel_df[ex.excel_df.NOUN ==
-                                     self.word_key].recallRespCorrect
-        word_type = ex.excel_df.loc[ex.excel_df.Noun ==
-                                    self.word_key].ASSOCIATE
+        correct_answer = ex.excel_df.loc[ex.excel_df.NOUN ==
+                                     self.word_key, 'recallRespCorrect'].values[0]
+        word_type = ex.excel_df.loc[ex.excel_df.NOUN ==
+                                    self.word_key].ASSOCIATE.values[0]
         probe_type = "HOUSE"
 
         #  Update participant score if correct
         print("Par Answer: ", answer_code[key_pressed],
               "\nCorrect Answer: ", correct_answer)
+        print("Word Type: ", word_type)
         if correct_answer == answer_code[key_pressed]:
             curr_score = ex.log_df.at[0, 'Num_Correct_Nouns']
 
@@ -284,9 +286,8 @@ def wait_for_key(keys):
         keys: a list or tuple of keys
     """
     event.clearEvents()
-    event.waitKeys(keyList=keys)
 
-    return event.getKeys()
+    return event.waitKeys(keyList=keys)[0]
 
 
 def get_probe(probe_type, is_odd):
@@ -303,16 +304,22 @@ def get_probe(probe_type, is_odd):
     elif probe_type == 'FACE' and not is_odd:
         probe_tup = random.choice(ex.face_list_even)
 
-    #  If unable to get probe, exit
     if probe_tup:
         (probe, keys) = probe_tup
+
+        #  Construct stim and add to stimlist
+        display_text = dict()
+        display_text[probe] = probe + "\n" + keys[0]
+        stim = (Text, (display_text, 0.1, 0.0, ["d", "k"]))
+
+        print("Stim List")
+        print(run.stimuli)
+        run.stimuli.insert(0, stim)
+        print("Updated Stim List")
+        print(run.stimuli)
     else:
+        #  If unable to get probe, exit
+        print("Inside get_probe")
         print("Exiting...")
         core.quit()
 
-    #  Construct stim and add to stimlist
-    display_text = dict()
-    display_text[probe] = probe + "\n" + keys
-    stim = (Text, (display_text, 0.1, 0.0, ["d", "k"]))
-
-    run.stimuli.insert(0, stim)
