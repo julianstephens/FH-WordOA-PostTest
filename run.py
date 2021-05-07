@@ -13,6 +13,7 @@ from settings import get_settings
 settings = get_settings(env="dev", test=True)
 logging.console.setLevel(logging.WARNING)
 
+stimuli = []
 
 def run_experiment():
     exp_info = {"participant": "", "session:": "001"}
