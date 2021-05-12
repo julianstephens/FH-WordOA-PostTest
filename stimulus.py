@@ -2,11 +2,14 @@ import ctypes
 import random
 import sys
 
-from psychopy import core, event, visual
+from psychopy import core, event, visual, logging
 
 import experiment as ex
-import run
+from settings import get_settings
 
+settings = get_settings(env="dev", test=True)
+logging.console.setLevel(logging.WARNING)
+par = None
 
 class Paradigm:
     """Represents a study paradigm.
@@ -76,6 +79,24 @@ class Paradigm:
             print("Added Stimulus")
             self.addStimulus(stimulus)
 
+    def insertStimulus(self, stimulus):
+        """Inserts a stimulus to the beginning of the stim list.
+
+        A stimulus should be a tuple of the form:
+            (StimulusType, (arguments))
+
+        Ex: (Text, ('Hello World!', 3.0))
+
+        Args:
+            stimulus: the stimulus to be added
+
+        """
+        assert type(stimulus) in (
+            tuple,
+            list,
+        ), "Stimulus should be in form (StimulusType, (arguments))"
+        self.stimuli.insert(0, stimulus)
+
     def playAll(self, is_odd, verbose=False):
         """Plays all the stimuli in the sequence.
 
@@ -93,7 +114,6 @@ class Paradigm:
 
             self.playNext(is_odd)
         core.quit()
-        print("Finished")
 
     def playNext(self, is_odd, verbose=False):
         """Plays the next stimulus in the sequence
@@ -151,7 +171,7 @@ class Stimulus(object):
 
 
 class Text(Stimulus):
-    def __init__(self, window, text, height=0.1, duration=2.0, keys=None):
+    def __init__(self, window, text, height=0.1, duration=2.0, keys=None, is_probe=False):
         """Initializes a text stimulus
 
         Args:
@@ -159,6 +179,7 @@ class Text(Stimulus):
             text: text to display
             duration: the duration the text will appear
             keys: the list of keys to press to continue to the next stimulus (if None, will automatically go to next stimulus)
+            is_probe: T/F if stimulus is a word or probe
         """
         self.window = window
         self.word_key = list(text.keys())[0]
@@ -167,6 +188,7 @@ class Text(Stimulus):
             self.window, text=text[self.word_key], height=self.height, units="norm")
         self.duration = duration
         self.keys = keys
+        self.is_probe = is_probe
 
     def show(self, is_odd):
         self.text.draw()
@@ -175,9 +197,7 @@ class Text(Stimulus):
         if self.duration:
             core.wait(self.duration)
         elif self.keys:
-            print("waiting for key")
-            wait = WaitForKey(self.window, self.keys, self.word_key)
-            print("created wait")
+            wait = WaitForKey(self.window, self.keys, self.word_key, self.is_probe)
 
             return wait.show(self, is_odd)
 
@@ -213,26 +233,24 @@ class WaitForKey(Stimulus):
 
     """
 
-    def __init__(self, window, keys, word_key, event="continue"):
+    def __init__(self, window, keys, word_key, is_probe, event="continue"):
         self.window = window
         self.keys = keys
         self.event = event
         self.word_key = word_key
+        self.is_probe = is_probe
 
     def show(self, stimulus, is_odd):
-        print("In wait show")
-
         #  Get participant answer
         key_pressed = wait_for_key(self.keys)
 
         #  Process answer
-        self.run_event(stimulus, is_odd, key_pressed)
+        self.run_event(stimulus, is_odd, self.is_probe, key_pressed)
 
         return self
 
-    def run_event(self, stimulus, is_odd, key_pressed):
+    def run_event(self, stimulus, is_odd, is_probe, key_pressed):
         if self.event == "exit":
-            print("Inside run_event")
             print("Exiting...")
             self.window.close()
             core.quit()
@@ -256,9 +274,6 @@ class WaitForKey(Stimulus):
         probe_type = "HOUSE"
 
         #  Update participant score if correct
-        print("Par Answer: ", answer_code[key_pressed],
-              "\nCorrect Answer: ", correct_answer)
-        print("Word Type: ", word_type)
         if correct_answer == answer_code[key_pressed]:
             curr_score = ex.log_df.at[0, 'Num_Correct_Nouns']
 
@@ -268,7 +283,7 @@ class WaitForKey(Stimulus):
             else:
                 ex.log_df.at[0, 'Num_Correct_Nouns'] = 1
 
-            probe_type = word_type
+            probe_type = word_type.upper()
         else:
             probes = ["HOUSE", "FACE"]
             probe_type = probes[random.randint(0, 1)]
@@ -291,7 +306,6 @@ def wait_for_key(keys):
 
 
 def get_probe(probe_type, is_odd):
-    print("Creating probe")
     probe_tup = None
 
     #  Get probe
@@ -299,8 +313,10 @@ def get_probe(probe_type, is_odd):
         probe_tup = random.choice(ex.house_list_odd)
     elif probe_type == 'HOUSE' and not is_odd:
         probe_tup = random.choice(ex.house_list_even)
-    if probe_type == 'FACE' and is_odd:
+    elif probe_type == 'FACE' and is_odd:
+        print("Found correct probe_tup")
         probe_tup = random.choice(ex.face_list_odd)
+        print(probe_tup)
     elif probe_type == 'FACE' and not is_odd:
         probe_tup = random.choice(ex.face_list_even)
 
@@ -310,16 +326,48 @@ def get_probe(probe_type, is_odd):
         #  Construct stim and add to stimlist
         display_text = dict()
         display_text[probe] = probe + "\n" + keys[0]
-        stim = (Text, (display_text, 0.1, 0.0, ["d", "k"]))
+        stim = (Text, (display_text, 0.1, 0.0, ["d", "k"], True))
+        insert(stim)
 
-        print("Stim List")
-        print(run.stimuli)
-        run.stimuli.insert(0, stim)
-        print("Updated Stim List")
-        print(run.stimuli)
     else:
         #  If unable to get probe, exit
         print("Inside get_probe")
         print("Exiting...")
         core.quit()
+
+def constructPar(is_odd):
+    global par
+    par = Paradigm(
+        window_dimensions=settings["window_dimensions"], escape_key="escape")
+    default_duration = 2.0
+    default_keys = ["d", "k"]
+
+    #  Get list of 40 random words
+    face_words = ex.face_rows.NOUN.tolist()
+    house_words = ex.house_rows.NOUN.tolist()
+    random_words = face_words + house_words
+    random.shuffle(random_words)
+
+    #  Create intro routine
+    intro_text = dict()
+    intro_text['intro'] = ex.intro
+    stimuli = [(Text, (intro_text, 0.05,
+                          ex.intro_duration, ex.intro_key))]
+
+    #  Create word stimuli
+    for word in random_words:
+        key_text = ex.rand_odd_key if is_odd else ex.rand_even_key
+        display_text = dict()
+        display_text[word] = word + "\n" + key_text
+        stim = (Text, (display_text, 0.1, 0.0, default_keys))
+        stimuli.append(stim)
+
+    #  Add stimuli to paradigm
+    par.addStimuli(stimuli)
+
+
+def insert(stimulus):
+    global par
+    par.insertStimulus(stimulus) 
+
 
