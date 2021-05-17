@@ -6,10 +6,12 @@ BASE = {
     "mouse_visible": False,
     "logging_level": logging.INFO,
     "exp_name": "FH_WordOA_PostTest",
-    "log_file": "./test_log.xlsx"
+    "log_file": "test_log.xlsx"
 }
 
-TEST = {"test": True, "logging_level": logging.DEBUG, "exp_name": "TestExp"}
+TEST = {"test": True, "logging_level": logging.DEBUG,
+        "exp_name": "TestExp"}
+
 
 PRODUCTION = {"test": False, "logging_level": logging.INFO}
 
@@ -18,6 +20,7 @@ DEV = {
     "window_dimensions": "full_screen",
     "button_box": None,
     "n_runs": 1,
+    "log_file": "test_log.xlsx"
 }
 
 
