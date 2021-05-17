@@ -18,8 +18,8 @@ intro_duration = 2.0
 intro_key = ["d", "k"]
 
 #  Random word key assignments
-rand_odd_key = "D = BUILDING, K = FACE"
-rand_even_key = "D = FACE, K =  BUILDING"
+rand_odd_key = "'D' = BUILDING, 'K' = FACE"
+rand_even_key = "'D' = FACE, 'K' =  BUILDING"
 
 #  Probes
 house_probe_1 = "IS THIS A RESIDENTIAL OR COMMERCIAL BUILDING?"
@@ -61,15 +61,6 @@ excel_df = pd.read_excel('./Stim_AssociateMasterList.xlsx',
 face_rows = excel_df[excel_df.ASSOCIATE == "Face"].sample(20)
 house_rows = excel_df[excel_df.ASSOCIATE == "House"].sample(20)
 
-#  Create logs
-log_df = pd.DataFrame(
-    columns=['Num_Correct_Nouns', 'Num_Correct_Probes', 'Experinment_Runtime'])
-key_log_df = pd.DataFrame(
-    columns=['Noun_Probe', 'P_Answer', 'C_Answer', 'Response_Time'])
-
-#  Initialize scores to 0
-log_df.at[0, 'Num_Correct_Nouns'] = 0
-log_df.at[0, 'Num_Correct_Probes'] = 0
-
-#  print(log_df)
-print(excel_df.loc[excel_df.NOUN == "ROOT"].ASSOCIATE)
+#  Create log
+log_df = pd.DataFrame(columns=['NOUN', 'ASSOCIATE', 'MF_RC', 'YO_OM', 'WN_LD', 'RESP_KEY', 'RESP_CODED',
+                               'RESP_CORRECT', 'RESP_TIME', 'PROBE_TYPE', 'PROBE_KEY', 'PROBE_CORRECT', 'PROBE_TIME'])

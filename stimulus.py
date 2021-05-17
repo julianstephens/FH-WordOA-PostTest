@@ -1,8 +1,9 @@
+from collections import OrderedDict
 import ctypes
 import random
 import sys
 
-from psychopy import core, event, visual, logging
+from psychopy import core, event, logging, visual
 
 import experiment as ex
 from settings import get_settings
@@ -10,6 +11,7 @@ from settings import get_settings
 settings = get_settings(env="dev", test=True)
 logging.console.setLevel(logging.WARNING)
 par = None
+
 
 class Paradigm:
     """Represents a study paradigm.
@@ -19,6 +21,7 @@ class Paradigm:
         _init_stimulus
         escape_key
         stimuli
+        log_data
 
     """
 
@@ -49,6 +52,7 @@ class Paradigm:
 
         self.stimuli = []
         self.escape_key = escape_key
+        self.log_data = OrderedDict()
 
     def addStimulus(self, stimulus):
         """Adds a stimulus.
@@ -113,7 +117,7 @@ class Paradigm:
                 "Playing stimulus {stim_index}".format(stim_index=stim_index)
 
             self.playNext(is_odd)
-        core.quit()
+        #  core.quit()
 
     def playNext(self, is_odd, verbose=False):
         """Plays the next stimulus in the sequence
@@ -132,8 +136,8 @@ class Paradigm:
             if verbose:
                 print(stim)
             return stim.show(is_odd)
-        else:
-            core.quit()
+        #  else:
+        #      core.quit()
 
     def _init_stimulus(self, stim_data):
         """Initialize a stimulus object from a tuple of the form
@@ -144,7 +148,6 @@ class Paradigm:
 
         Returns:
             stim_class with new stimulus object
-
 
         """
         stim_class = stim_data[0]
@@ -197,7 +200,8 @@ class Text(Stimulus):
         if self.duration:
             core.wait(self.duration)
         elif self.keys:
-            wait = WaitForKey(self.window, self.keys, self.word_key, self.is_probe)
+            wait = WaitForKey(self.window, self.keys,
+                              self.word_key, self.is_probe)
 
             return wait.show(self, is_odd)
 
@@ -250,45 +254,55 @@ class WaitForKey(Stimulus):
         return self
 
     def run_event(self, stimulus, is_odd, is_probe, key_pressed):
+        global par
+
         if self.event == "exit":
             print("Exiting...")
             self.window.close()
             core.quit()
 
-        #  Create key for answer lookup
-        answer_code = dict()
+        #  if is_probe:
+        #      TODO: Update log with probe info
+        #      last = next(reversed(par.log_data.keys()))
+        #      log = par.log_data[last]
+        #      log.append([key_pressed, ])
+        if not is_probe:
+            #  Create key for answer lookup
+            answer_code = dict()
 
-        #  Set keys based on participant ID
-        if is_odd:
-            answer_code['d'] = 'f'
-            answer_code['k'] = 'e'
-        else:
-            answer_code['d'] = 'e'
-            answer_code['k'] = 'f'
-
-        #  Get correct answer
-        correct_answer = ex.excel_df.loc[ex.excel_df.NOUN ==
-                                     self.word_key, 'recallRespCorrect'].values[0]
-        word_type = ex.excel_df.loc[ex.excel_df.NOUN ==
-                                    self.word_key].ASSOCIATE.values[0]
-        probe_type = "HOUSE"
-
-        #  Update participant score if correct
-        if correct_answer == answer_code[key_pressed]:
-            curr_score = ex.log_df.at[0, 'Num_Correct_Nouns']
-
-            if curr_score:
-                new_score = int(curr_score) + 1
-                ex.log_df.at[0, 'Num_Correct_Nouns'] = new_score
+            #  Set keys based on participant ID
+            if is_odd:
+                answer_code['d'] = 'f'
+                answer_code['k'] = 'e'
             else:
-                ex.log_df.at[0, 'Num_Correct_Nouns'] = 1
+                answer_code['d'] = 'e'
+                answer_code['k'] = 'f'
 
+            #  Get correct answer
+            correct_answer = ex.excel_df.loc[ex.excel_df.NOUN ==
+                                             self.word_key, 'recallRespCorrect'].values[0]
+            word_type = ex.excel_df.loc[ex.excel_df.NOUN ==
+                                        self.word_key].ASSOCIATE.values[0]
             probe_type = word_type.upper()
-        else:
-            probes = ["HOUSE", "FACE"]
-            probe_type = probes[random.randint(0, 1)]
 
-        get_probe(probe_type, is_odd)
+            mf_rc = ex.excel_df.loc[ex.excel_df.NOUN ==
+                                    self.word_key, 'MF_RC'].values[0]
+            yo_om = ex.excel_df.loc[ex.excel_df.NOUN ==
+                                    self.word_key, 'YO_OM'].values[0]
+            wn_ld = ex.excel_df.loc[ex.excel_df.NOUN ==
+                                    self.word_key, 'WN_LD'].values[0]
+            correct_flag = 1 if correct_answer == answer_code[key_pressed] else 0
+
+            #  Determine probe type
+            if not correct_flag:
+                probes = ["HOUSE", "FACE"]
+                probe_type = probes[random.randint(0, 1)]
+
+            #  Update log
+            par.log_data[self.word_key] = [
+                self.word_key, word_type.upper(), mf_rc, yo_om, wn_ld, key_pressed, answer_code[key_pressed], correct_flag, probe_type]
+
+            get_probe(probe_type, is_odd)
 
         stimulus.window.flip()
         return stimulus
@@ -306,6 +320,13 @@ def wait_for_key(keys):
 
 
 def get_probe(probe_type, is_odd):
+    """Insert probe at beginning of master stim list 
+
+    Args:
+        probe_type: Face or House probe
+        is_odd: T/F participant ID is odd
+
+    """
     probe_tup = None
 
     #  Get probe
@@ -314,9 +335,7 @@ def get_probe(probe_type, is_odd):
     elif probe_type == 'HOUSE' and not is_odd:
         probe_tup = random.choice(ex.house_list_even)
     elif probe_type == 'FACE' and is_odd:
-        print("Found correct probe_tup")
         probe_tup = random.choice(ex.face_list_odd)
-        print(probe_tup)
     elif probe_type == 'FACE' and not is_odd:
         probe_tup = random.choice(ex.face_list_even)
 
@@ -331,11 +350,17 @@ def get_probe(probe_type, is_odd):
 
     else:
         #  If unable to get probe, exit
-        print("Inside get_probe")
         print("Exiting...")
         core.quit()
 
+
 def constructPar(is_odd):
+    """ Initializes experiment paradigm
+
+    Args:
+        is_odd: T/F participant ID is odd
+
+    """
     global par
     par = Paradigm(
         window_dimensions=settings["window_dimensions"], escape_key="escape")
@@ -352,7 +377,7 @@ def constructPar(is_odd):
     intro_text = dict()
     intro_text['intro'] = ex.intro
     stimuli = [(Text, (intro_text, 0.05,
-                          ex.intro_duration, ex.intro_key))]
+                       ex.intro_duration, ex.intro_key))]
 
     #  Create word stimuli
     for word in random_words:
@@ -367,7 +392,11 @@ def constructPar(is_odd):
 
 
 def insert(stimulus):
+    """ Inserts stimulus at beginning of master stim list
+
+    Args:
+        stimulus: Stimulus to be inserted
+
+    """
     global par
-    par.insertStimulus(stimulus) 
-
-
+    par.insertStimulus(stimulus)
