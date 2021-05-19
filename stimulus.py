@@ -3,6 +3,7 @@ import ctypes
 import random
 import sys
 
+import pandas as pd
 from psychopy import core, event, logging, visual
 
 import experiment as ex
@@ -11,7 +12,6 @@ from settings import get_settings
 settings = get_settings(env="dev", test=True)
 logging.console.setLevel(logging.WARNING)
 par = None
-
 
 class Paradigm:
     """Represents a study paradigm.
@@ -80,7 +80,6 @@ class Paradigm:
 
         """
         for stimulus in stimuli:
-            print("Added Stimulus")
             self.addStimulus(stimulus)
 
     def insertStimulus(self, stimulus):
@@ -117,7 +116,8 @@ class Paradigm:
                 "Playing stimulus {stim_index}".format(stim_index=stim_index)
 
             self.playNext(is_odd)
-        #  core.quit()
+
+        core.quit()
 
     def playNext(self, is_odd, verbose=False):
         """Plays the next stimulus in the sequence
@@ -136,8 +136,17 @@ class Paradigm:
             if verbose:
                 print(stim)
             return stim.show(is_odd)
-        #  else:
-        #      core.quit()
+        else:
+            #  Dump logs to csv
+            uid = settings["participant"]
+            if int(uid) < 10: 
+                uid = "0" + str(uid) 
+            log_path = str(uid) + "_posttest_log.csv"
+            log_df = pd.DataFrame.from_dict(
+                par.log_data, orient='index', columns=['NOUN', 'ASSOCIATE', 'MF_RC', 'YO_OM', 'WN_LD', 'RESP_KEY', 'RESP_CODED',
+                                                          'RESP_CORRECT', 'PROBE_TYPE'])
+            log_df.to_csv(log_path, index=False)
+            core.quit()
 
     def _init_stimulus(self, stim_data):
         """Initialize a stimulus object from a tuple of the form
