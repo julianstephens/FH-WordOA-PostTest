@@ -140,11 +140,11 @@ class Paradigm:
 
             if verbose:
                 print(stim)
+
             return stim.show(is_odd)
         else:
             elapsed = experiment_timer.getTime()
-            par.log_data["exp_runtime"] = ["", "", "", "", "", "", "", "", ""] 
-            par.log_data["exp_runtime"] = ["Total Experiment Runtime", "", "", "", "", "", "", "", elapsed] 
+            par.log_data["exp_runtime"] = ["Total Experiment Runtime", "", "", "", "", "", "", "", "", elapsed] 
 
             #  Get participant ID and format
             uid = settings["participant"]
@@ -159,7 +159,7 @@ class Paradigm:
             log_path = "logs/" + str(uid) + "_posttest_log.csv"
             log_df = pd.DataFrame.from_dict(
                 par.log_data, orient='index', columns=['NOUN', 'ASSOCIATE', 'MF_RC', 'YO_OM', 'WN_LD', 'RESP_KEY', 'RESP_CODED',
-                                                          'RESP_CORRECT', 'PROBE_TYPE'])
+                                                          'RESP_CORRECT', 'KEY_RT', 'PROBE_TYPE'])
             log_df.to_csv(log_path, index=False)
 
             core.quit()
@@ -222,7 +222,7 @@ class Text(Stimulus):
         self.text.draw()
         self.window.flip()
         #  TODO: Create clock
-        #  timer =
+        stim_timer = core.MonotonicClock()
 
         if self.duration:
             core.wait(self.duration)
@@ -230,7 +230,7 @@ class Text(Stimulus):
             wait = WaitForKey(self.window, self.keys,
                               self.word_key, self.is_probe)
 
-            return wait.show(self, is_odd)
+            return wait.show(self, is_odd, stim_timer)
 
         self.window.flip()
         return self
@@ -271,16 +271,17 @@ class WaitForKey(Stimulus):
         self.word_key = word_key
         self.is_probe = is_probe
 
-    def show(self, stimulus, is_odd):
+    def show(self, stimulus, is_odd, stim_timer):
         #  Get participant answer
         key_pressed = wait_for_key(self.keys)
+        key_rt = stim_timer.getTime() 
 
         #  Process answer
-        self.run_event(stimulus, is_odd, self.is_probe, key_pressed)
+        self.run_event(stimulus, is_odd, self.is_probe, key_pressed, key_rt)
 
         return self
 
-    def run_event(self, stimulus, is_odd, is_probe, key_pressed):
+    def run_event(self, stimulus, is_odd, is_probe, key_pressed, key_rt):
         global par
 
         if self.event == "exit":
@@ -327,7 +328,7 @@ class WaitForKey(Stimulus):
 
             #  Update log
             par.log_data[self.word_key] = [
-                self.word_key, word_type.upper(), mf_rc, yo_om, wn_ld, key_pressed, answer_code[key_pressed], correct_flag, probe_type]
+                self.word_key, word_type.upper(), mf_rc, yo_om, wn_ld, key_pressed, answer_code[key_pressed], correct_flag, key_rt, probe_type]
 
             get_probe(probe_type, is_odd)
 
