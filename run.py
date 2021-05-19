@@ -25,8 +25,9 @@ def run_experiment():
         #  Start clock for total experiment runtime
         experiment_timer = core.MonotonicClock()
         st.par.playAll(is_odd)
+        elapsed = experiment_timer.getTime()
 
-        #  #  Write total runtime to log
+        #  Write total runtime to log
         #  exp_runtime = experiment_timer.getTime()
         #  ex.log_df.at[0, 'Experiment_Runtime'] = exp_runtime
 

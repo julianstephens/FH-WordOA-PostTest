@@ -2,6 +2,7 @@ from collections import OrderedDict
 import ctypes
 import random
 import sys
+import os
 
 import pandas as pd
 from psychopy import core, event, logging, visual
@@ -12,6 +13,7 @@ from settings import get_settings
 settings = get_settings(env="dev", test=True)
 logging.console.setLevel(logging.WARNING)
 par = None
+experiment_timer = None
 
 class Paradigm:
     """Represents a study paradigm.
@@ -109,6 +111,9 @@ class Paradigm:
         """
         stim_index = 0
 
+        #  Initialize clock for total experiment runtime
+        global experiment_timer
+        experiment_timer = core.MonotonicClock()
         while self.escape_key not in event.getKeys():
             stim_index += 1
 
@@ -137,15 +142,26 @@ class Paradigm:
                 print(stim)
             return stim.show(is_odd)
         else:
-            #  Dump logs to csv
+            elapsed = experiment_timer.getTime()
+            par.log_data["exp_runtime"] = ["", "", "", "", "", "", "", "", ""] 
+            par.log_data["exp_runtime"] = ["Total Experiment Runtime", "", "", "", "", "", "", "", elapsed] 
+
+            #  Get participant ID and format
             uid = settings["participant"]
             if int(uid) < 10: 
                 uid = "0" + str(uid) 
-            log_path = str(uid) + "_posttest_log.csv"
+
+            #  Create logs directory if doesn't exist
+            if not os.path.exists('logs'):
+                os.makedirs('logs')
+
+            #  Dump log info to csv
+            log_path = "logs/" + str(uid) + "_posttest_log.csv"
             log_df = pd.DataFrame.from_dict(
                 par.log_data, orient='index', columns=['NOUN', 'ASSOCIATE', 'MF_RC', 'YO_OM', 'WN_LD', 'RESP_KEY', 'RESP_CODED',
                                                           'RESP_CORRECT', 'PROBE_TYPE'])
             log_df.to_csv(log_path, index=False)
+
             core.quit()
 
     def _init_stimulus(self, stim_data):
@@ -205,6 +221,8 @@ class Text(Stimulus):
     def show(self, is_odd):
         self.text.draw()
         self.window.flip()
+        #  TODO: Create clock
+        #  timer =
 
         if self.duration:
             core.wait(self.duration)
@@ -270,11 +288,11 @@ class WaitForKey(Stimulus):
             self.window.close()
             core.quit()
 
+        #  TODO: Add probe data to log
         #  if is_probe:
-        #      TODO: Update log with probe info
         #      last = next(reversed(par.log_data.keys()))
         #      log = par.log_data[last]
-        #      log.append([key_pressed, ])
+        #      #  log.append([key_pressed, ])
         if not is_probe:
             #  Create key for answer lookup
             answer_code = dict()
@@ -385,8 +403,7 @@ def constructPar(is_odd):
     #  Create intro routine
     intro_text = dict()
     intro_text['intro'] = ex.intro
-    stimuli = [(Text, (intro_text, 0.05,
-                       ex.intro_duration, ex.intro_key))]
+    stimuli = [(Text, (intro_text, 0.05, ex.intro_duration, ex.intro_key))]
 
     #  Create word stimuli
     for word in random_words:
