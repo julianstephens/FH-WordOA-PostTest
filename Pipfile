@@ -1,0 +1,21 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+psychopy = "*"
+wheel = "*"
+wxpython = {path = "./wxPython-4.1.1-cp38-cp38-linux_x86_64.whl"}
+pandas = "*"
+xlsxwriter = "*"
+jinja2 = "*"
+
+[dev-packages]
+pylint = "*"
+jedi = "*"
+autopep8 = "*"
+pynvim = "*"
+
+[requires]
+python_version = "3.8"
