@@ -1,7 +1,7 @@
-# Ignore everything
-*
-
-# But not these files
-!.gitignore
-!new_post_test.py
-
+.env/
+.__pycache__/
+Pipfile.lock
+wxPython-4.1.1-cp38-cp38-linux_x86_64.whl
+tables-3.6.1-cp39-cp39-win_amd64.whl
+h5py-3.1.0-cp39-cp39-win_amd64.whl
+Cython-0.29.22-cp39-cp39-win_amd64.whl
