@@ -4,6 +4,7 @@ from psychopy import logging
 BASE = {
     "test": False,
     "mouse_visible": False,
+    "window_dimensions": "full_screen",
     "logging_level": logging.INFO,
     "exp_name": "FH_WordOA_PostTest",
 }
@@ -12,7 +13,14 @@ TEST = {"test": True, "logging_level": logging.DEBUG,
         "exp_name": "TestExp"}
 
 
-PRODUCTION = {"test": False, "logging_level": logging.INFO}
+PRODUCTION = {
+    "env": "production",
+    "test": False,
+    "logging_level": logging.INFO,
+    "mouse_visible": False,
+    "window_dimensions": "full_screen",
+    "exp_name": "FH_WordOA_PostTest",
+}
 
 DEV = {
     "env": "dev",

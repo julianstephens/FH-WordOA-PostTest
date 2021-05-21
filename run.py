@@ -20,16 +20,12 @@ def run_experiment():
     is_odd = True if int(exp_info["participant"]) % 2 != 0 else False
 
     #  Initialize experiment paradigm
-    st.constructPar(is_odd)
+    st.construct_par(is_odd)
     if st.par:
         #  Start clock for total experiment runtime
         experiment_timer = core.MonotonicClock()
         st.par.playAll(is_odd)
         elapsed = experiment_timer.getTime()
-
-        #  Write total runtime to log
-        #  exp_runtime = experiment_timer.getTime()
-        #  ex.log_df.at[0, 'Experiment_Runtime'] = exp_runtime
 
 
 if __name__ == "__main__":
