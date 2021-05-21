@@ -27,4 +27,4 @@ Notable Functions
 
 ## `Stim_AssociateMasterList.xlsx`
 
-Excel sheet with master list of available nouns and their attributes. **Note**: if the location of this file changes, make sure to update the `excel_df` assignment in `experiment.py`
+Excel sheet with master list of available nouns and their attributes. **Note: if the location of this file changes, make sure to update the `excel_df` assignment in `experiment.py`**
