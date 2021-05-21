@@ -6,15 +6,15 @@ import re
 import sys
 
 import pandas as pd
-from psychopy import core, event, logging, visual
+from psychopy import core, event, visual
 
 import experiment as ex
 from settings import get_settings
 
-settings = get_settings(env="dev", test=True)
-logging.console.setLevel(logging.WARNING)
+settings = get_settings(env="production", test=False)
 par = None
 experiment_timer = None
+
 
 class Paradigm:
     """Represents a study paradigm.
@@ -145,12 +145,13 @@ class Paradigm:
             return stim.show(is_odd)
         else:
             elapsed = experiment_timer.getTime()
-            par.log_data["exp_runtime"] = ["Total Experiment Runtime", "", "", "", "", "", "", "", "", "", "", "", "", "", elapsed] 
+            par.log_data["exp_runtime"] = ["Total Experiment Runtime",
+                                           "", "", "", "", "", "", "", "", "", "", "", "", "", elapsed]
 
             #  Get participant ID and format
             uid = settings["participant"]
-            if int(uid) < 10: 
-                uid = "0" + str(uid) 
+            if int(uid) < 10:
+                uid = "0" + str(uid)
 
             #  Create logs directory if doesn't exist
             if not os.path.exists(ex.log_dir):
@@ -160,7 +161,7 @@ class Paradigm:
             log_path = str(ex.log_dir) + "/" + str(uid) + "_posttest_log.csv"
             log_df = pd.DataFrame.from_dict(
                 par.log_data, orient='index', columns=['NOUN', 'ASSOCIATE', 'MF_RC', 'YO_OM', 'WN_LD', 'RESP_KEY', 'RESP_CODED',
-                                                          'RESP_CORRECT', 'KEY_RT', 'PROBE_TYPE', 'PROBE', 'PROBE_KEY', 'PROBE_CODED', 'PROBE_CORRECT', 'PROBE_RT'])
+                                                       'RESP_CORRECT', 'KEY_RT', 'PROBE_TYPE', 'PROBE', 'PROBE_KEY', 'PROBE_CODED', 'PROBE_CORRECT', 'PROBE_RT'])
             log_df.to_csv(log_path, index=False)
 
             core.quit()
@@ -232,7 +233,8 @@ class Text(Stimulus):
         if self.duration:
             core.wait(self.duration)
         elif self.keys:
-            wait = WaitForKey(self.window, self.keys, self.word_key, self.stim_type, self.probe_details)
+            wait = WaitForKey(self.window, self.keys,
+                              self.word_key, self.stim_type, self.probe_details)
 
             return wait.show(self, is_odd, stim_timer)
 
@@ -281,10 +283,11 @@ class WaitForKey(Stimulus):
     def show(self, stimulus, is_odd, stim_timer):
         #  Get participant answer
         key_pressed = wait_for_key(self.keys)
-        key_rt = stim_timer.getTime() 
+        key_rt = stim_timer.getTime()
 
         #  Process answer
-        self.run_event(stimulus, is_odd, self.stim_type, self.probe_details, key_pressed, key_rt)
+        self.run_event(stimulus, is_odd, self.stim_type,
+                       self.probe_details, key_pressed, key_rt)
 
         return self
 
@@ -307,7 +310,8 @@ class WaitForKey(Stimulus):
                                     last_noun, 'YO_OM'].values[0]
             wn_ld = ex.excel_df.loc[ex.excel_df.NOUN ==
                                     last_noun, 'WN_LD'].values[0]
-            last_noun_attributes = [mf_rc.upper(), yo_om.upper(), wn_ld.upper()]
+            last_noun_attributes = [
+                mf_rc.upper(), yo_om.upper(), wn_ld.upper()]
 
             #  Process user response
             probe_question = probe_details['q']
@@ -317,7 +321,8 @@ class WaitForKey(Stimulus):
 
             #  Update log with probe info
             log = par.log_data[last_noun]
-            log.extend([probe_question, key_pressed, probe_answer, correct_flag, key_rt])
+            log.extend([probe_question, key_pressed,
+                        probe_answer, correct_flag, key_rt])
             par.log_data[last_noun] = log
         elif stim_type < 0:
             #  Create key for answer lookup
@@ -332,8 +337,10 @@ class WaitForKey(Stimulus):
                 answer_code['k'] = 'f'
 
             #  Get correct answer
-            correct_answer = ex.excel_df.loc[ex.excel_df.NOUN == self.word_key, 'recallRespCorrect'].values[0]
-            word_type = ex.excel_df.loc[ex.excel_df.NOUN == self.word_key].ASSOCIATE.values[0]
+            correct_answer = ex.excel_df.loc[ex.excel_df.NOUN ==
+                                             self.word_key, 'recallRespCorrect'].values[0]
+            word_type = ex.excel_df.loc[ex.excel_df.NOUN ==
+                                        self.word_key].ASSOCIATE.values[0]
             probe_type = word_type.upper()
 
             #  Get misc info related to word from master list
@@ -400,8 +407,8 @@ def get_probe(probe_type, is_odd):
         d_key = split[0]
         k_key = split[1]
 
-        d_answer = d_key[d_key.index('='):][2:] 
-        k_answer = k_key[k_key.index('='):][2:] 
+        d_answer = d_key[d_key.index('='):][2:]
+        k_answer = k_key[k_key.index('='):][2:]
         probe_details = {
             'q': probe,
             'd': d_answer,
@@ -411,7 +418,8 @@ def get_probe(probe_type, is_odd):
         #  Construct stim and add to stimlist
         display_text = dict()
         display_text[probe] = probe + "\n" + keys[0]
-        stim = (Text, (display_text, ex.default_text_height, ex.default_duration, ex.default_keys, 0, probe_details))
+        stim = (Text, (display_text, ex.default_text_height,
+                       ex.default_duration, ex.default_keys, 0, probe_details))
         insert(stim)
 
     else:
@@ -420,7 +428,7 @@ def get_probe(probe_type, is_odd):
         core.quit()
 
 
-def constructPar(is_odd):
+def construct_par(is_odd):
     """ Initializes experiment paradigm
 
     Args:
@@ -428,7 +436,8 @@ def constructPar(is_odd):
 
     """
     global par
-    par = Paradigm(window_dimensions=settings["window_dimensions"], escape_key="escape")
+    par = Paradigm(
+        window_dimensions=settings["window_dimensions"], escape_key="escape")
 
     #  Get list of 40 random nouns
     face_words = ex.face_rows.NOUN.tolist()
@@ -441,14 +450,16 @@ def constructPar(is_odd):
     intro_text['intro'] = ex.intro
 
     #  To use separate defaults for intro change below to ex.intro_duration and ex.intro_keys
-    stimuli = [(Text, (intro_text, ex.intro_text_height, ex.default_duration, ex.default_keys, 1))]
+    stimuli = [(Text, (intro_text, ex.intro_text_height,
+                       ex.default_duration, ex.default_keys, 1))]
 
     #  Create word stimuli
     for word in random_words:
         key_text = ex.noun_odd_key if is_odd else ex.noun_even_key
         display_text = dict()
         display_text[word] = word + "\n" + key_text
-        stim = (Text, (display_text, ex.default_text_height, ex.default_duration, ex.default_keys, -1))
+        stim = (Text, (display_text, ex.default_text_height,
+                       ex.default_duration, ex.default_keys, -1))
         stimuli.append(stim)
 
     #  Add stimuli to paradigm
