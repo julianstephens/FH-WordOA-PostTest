@@ -32,10 +32,12 @@ DEV = {
 
 def get_settings(env, test=False):
     settings = BASE
-    settings.update(TEST) if test else settings.update(PRODUCTION)
+    settings.update(TEST)
 
     if env == "dev":
         settings.update(DEV)
+    elif env == "production": 
+        settings.update(PRODUCTION)
     else:
         raise ValueError('Environment "{0}" not supported.'.format(env))
 
