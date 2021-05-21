@@ -2,7 +2,7 @@
 
 ## File Structure
 
-### `run.py`: Main file
+### `fh_wordoa_posttest.py`: Main file
 
 This file contains the application's main method. See comments for code explanation.
 
@@ -35,8 +35,8 @@ Excel sheet with master list of available nouns and their attributes. **Note: if
 
 Most of modifications will occur in `experiment.py` or `Stim_AssociateMasterList.xlsx`. **After modifying any of the project files, you'll need to rebuild the executable.** See below for instructions on how to do so. 
 
-### How to create a new `run.exe`
+### How to create a new `fh_wordoa_posttest.exe`
 
 We will be using the Python package [Nuitka](https://nuitka.net/doc/user-manual.html) to do this. If you don't already have Python and Nuitka installed, download the latest version of Python [here](https://www.python.org/downloads/) (be sure to check the box to add Python to your environment variables). In your terminal (command line for Windows), type the following command to verify that Python is installed correctly: `python --version`. Now to install Nuitka, use the command `python -m pip install nuitka`. You can verify the installation with `python -m nuitka --version`. 
 
-Once Python and Nuitka are installed, navigate to the project directory. Once in the directory, use the command `python -m nuitka --follow-imports run.py` to generate a Windows executable. This may take upwards of an hour to complete, so don't worry if it appears to be frozen or is taking a long time. When the command is finished executing, you should see a program called `run.exe` in the project directory.
+Once Python and Nuitka are installed, navigate to the project directory. Once in the directory, use the command `python -m nuitka --follow-imports fh_wordoa_posttest.py` to generate a Windows executable. This may take upwards of an hour to complete, so don't worry if it appears to be frozen or is taking a long time. When the command is finished executing, you should see a program called `fh_wordoa_posttest.exe` in the project directory.
