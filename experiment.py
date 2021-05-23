@@ -65,7 +65,7 @@ face_list_even = [(face_probe_1, face_key_even_1), (face_probe_2,
 #  ----DO NOT MODIFY ABOVE----
 
 #  Load stim list and get 40 random rows
-excel_df = pd.read_excel('./Stim_AssociateMasterList.xlsx',
+excel_df = pd.read_excel('resources/Stim_AssociateMasterList.xlsx',
                          index_col=None, usecols='A,C:H')
 face_rows = excel_df[excel_df.ASSOCIATE == "Face"].sample(20)
 house_rows = excel_df[excel_df.ASSOCIATE == "House"].sample(20)
