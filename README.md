@@ -27,7 +27,7 @@ Notable Functions
 - WaitForKey.run_event: answer processing after user input received
 - Paradigm.playNext: contains log dump to csv
 
-### `Stim_AssociateMasterList.xlsx`
+### `resources/Stim_AssociateMasterList.xlsx`
 
 Excel sheet with master list of available nouns and their attributes. **Note: if the location of this file changes, make sure to update the `excel_df` assignment in `experiment.py`**
 
