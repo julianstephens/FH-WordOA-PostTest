@@ -1,6 +1,7 @@
 env/**
 __pycache__/**
 run.build/**
+fh_wordoa_posttest.build/**
 run.exe
 python39.dll
 wxPython-4.1.1-cp38-cp38-linux_x86_64.whl
