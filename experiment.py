@@ -70,5 +70,5 @@ excel_df = pd.read_excel('resources/Stim_AssociateMasterList.xlsx',
 face_rows = excel_df[excel_df.ASSOCIATE == "Face"].sample(20)
 house_rows = excel_df[excel_df.ASSOCIATE == "House"].sample(20)
 
-#  Location of log files (if outside project directory, be sure to use full path)
+#  Location of log files (if outside project directory, be sure to use the full path)
 log_dir = "logs"
