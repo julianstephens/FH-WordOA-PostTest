@@ -35,7 +35,7 @@ Excel sheet with master list of available nouns and their attributes. **Note: if
 
 Most of modifications will occur in `experiment.py` or `Stim_AssociateMasterList.xlsx`. **After modifying any of the project files, you'll need to rebuild the executable.** See below for instructions on how to do so. 
 
-### How to create a new `fh_wordoa_posttest.exe`
+### How to create a new executable
 
 We will be using the Python package [Nuitka](https://nuitka.net/doc/user-manual.html) to do this. If you don't already have Python and Nuitka installed, download the latest version of Python [here](https://www.python.org/downloads/) (be sure to check the box to add Python to your environment variables). In your terminal (command line for Windows), type the following command to verify that Python is installed correctly: `python --version`. Now to install Nuitka, use the command `python -m pip install nuitka`. You can verify the installation with `python -m nuitka --version`. 
 
